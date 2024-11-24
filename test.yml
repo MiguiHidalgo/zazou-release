@@ -1,8 +1,9 @@
-version: "3"
-
+version: '3.8'
 services:
   sonarqube:
     image: sonarqube:lts-community
+    container_name: sonarqube
+    restart: always
     depends_on:
       - db
     environment:
@@ -13,16 +14,30 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
-    ports:
-      - "9000:9000"
+    expose:
+      - "9000" # Internal port for NGINX to proxy
+
   db:
-    image: postgres:12
+    image: postgres:15
+    container_name: postgres
+    restart: always
     environment:
       POSTGRES_USER: sonar
       POSTGRES_PASSWORD: sonar
     volumes:
       - postgresql:/var/lib/postgresql
       - postgresql_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80" # Map port 80 for HTTP traffic
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - sonarqube
 
 volumes:
   sonarqube_data:
